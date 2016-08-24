@@ -42,6 +42,7 @@ namespace JunhyehokWebServerRedis
             awaitingInit = new Dictionary<string, long>();
             clients = new Dictionary<long, ClientHandle>();
             rooms = new Dictionary<int, Room>();
+            UpdateMMF(true);
         }
 
         public ReceiveHandle(ClientHandle client, Packet recvPacket)
@@ -166,16 +167,12 @@ namespace JunhyehokWebServerRedis
                 Header backendReqHeader = new Header(Code.CONNECTION_PASS_SUCCESS, 0, client.UserId);
                 Packet backendReqPacket = new Packet(backendReqHeader, null);
                 backend.SendBytes(backendReqPacket);
-
-                client.initFailCounter = 0;
             }
             else
             {
                 returnData = null;
                 returnHeader = new Header(Code.INITIALIZE_FAIL, 0);
                 response = new Packet(returnHeader, returnData);
-
-                client.initFailCounter++;
             }
 
             return response;

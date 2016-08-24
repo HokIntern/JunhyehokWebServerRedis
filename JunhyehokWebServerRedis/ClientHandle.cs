@@ -20,7 +20,7 @@ namespace JunhyehokWebServerRedis
         HttpListenerContext listenerContext;
         int bytecount;
         int heartbeatMiss = 0;
-        public int initFailCounter = 0;
+        int initFailCounter = 0;
 
         private WebSocket webSocket;
         private char[] cookieChar;
@@ -74,13 +74,13 @@ namespace JunhyehokWebServerRedis
             {
                 webSocketContext = await listenerContext.AcceptWebSocketAsync(subProtocol: null);
                 Interlocked.Increment(ref count);
-                Console.WriteLine("Processed: {0}", count);
             }
             catch (Exception e)
             {
                 listenerContext.Response.StatusCode = 500;
                 listenerContext.Response.Close();
-                Console.WriteLine("Exception: {0}", e);
+                Console.WriteLine("WebSocket accept failed... Continuing...");
+                //Console.WriteLine("Exception: {0}", e);
                 return;
             }
 
@@ -123,10 +123,15 @@ namespace JunhyehokWebServerRedis
                         }
 
                         // if Initialize_fail, it means the user came with a bad cookie
-                        if (respPacket.header.code == Code.INITIALIZE_FAIL && initFailCounter == 5)
+                        if (respPacket.header.code == Code.INITIALIZE_FAIL)
                         {
-                            doSignout = true;
-                            break; //close socket connection
+                            if (initFailCounter == 5)
+                            {
+                                doSignout = true;
+                                break; //close socket connection
+                            }
+                            else
+                                initFailCounter++;
                         }
                         else if (respPacket.header.code == Code.DELETE_USER_SUCCESS || respPacket.header.code == Code.SIGNOUT)
                         {
@@ -134,13 +139,16 @@ namespace JunhyehokWebServerRedis
                             doSignout = false;
                             break;
                         }
+                        else
+                            initFailCounter = 0;
                     }
                 }
             }
             catch (Exception e)
             {
                 // Just log any exceptions to the console. Pretty much any exception that occurs when calling `SendAsync`/`ReceiveAsync`/`CloseAsync` is unrecoverable in that it will abort the connection and leave the `WebSocket` instance in an unusable state.
-                Console.WriteLine("Exception: {0}", e);
+                //Console.WriteLine("Exception: {0}", e);
+                Console.WriteLine("WebSocket exception thrown... Closing WebSocket...");
             }
             finally
             {
