@@ -10,6 +10,7 @@ using Junhaehok;
 using static Junhaehok.HhhHelper;
 using static Junhaehok.Packet;
 using System.Net.WebSockets;
+using System.Timers;
 
 namespace JunhyehokWebServerRedis
 {
@@ -89,6 +90,8 @@ namespace JunhyehokWebServerRedis
             try
             {
                 byte[] receiveBuffer = new byte[1024];
+
+                StartHeartbeat();
 
                 while (webSocket.State == WebSocketState.Open)
                 {
@@ -178,6 +181,19 @@ namespace JunhyehokWebServerRedis
             }
             byte[] bytes = PacketToBytes(packet);
             await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Binary, true, CancellationToken.None);
+        }
+
+        private void StartHeartbeat()
+        {
+            System.Timers.Timer timer = new System.Timers.Timer();
+            timer.Interval = 20 * 1000;
+            timer.Elapsed += new ElapsedEventHandler(SendHeartbeat);
+            timer.Start();
+        }
+
+        private void SendHeartbeat(object sender, ElapsedEventArgs e)
+        {
+            SendPacket(new Packet(new Header(Code.HEARTBEAT, 0), null));
         }
 
         private void Signout(bool signout)
