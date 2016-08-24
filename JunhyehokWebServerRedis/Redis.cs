@@ -227,19 +227,33 @@ namespace JunhyehokWebServerRedis
             //return db.SetRemove(key, userID);
         }
 
-        public bool SetUserType(string id, bool userType)
+        public bool SetUserType(string id, int userType)
         {
             long userID = GetUserID(id);
-
-            return db.StringSetBit("user", userID, userType);
+            if (userType == 0)
+                return db.SetAdd("user", userID);
+            else
+                return db.SetAdd("dummy", userID);
         }
 
 
-        public bool GetUserType(string id)
+        public bool GetUserType(long id)
         {
-            long userID = GetUserID(id);
+            string key = "dummy";
+            string[] userList = null;
 
-            return db.StringGetBit("user", userID);
+            RedisValue[] result = db.SetMembers(key);
+
+            for (int idx = 0; idx < result.Length; idx++)
+            {
+                if (result[idx] == id)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+
         }
 
 

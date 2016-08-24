@@ -91,10 +91,10 @@ namespace JunhyehokWebServerRedis
         public void MSG(long userid)
         {
             string username = redis.GetUserName(userid);
-            bool isDummy = redis.GetUserType(username);
+            bool isDummy = redis.GetUserType(userid);
 
             if (!isDummy)
-                redis.AddChat(username);  
+                redis.AddChat(username);
         }
 
         //RANKINGS = 1400;
