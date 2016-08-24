@@ -189,24 +189,42 @@ namespace JunhyehokWebServerRedis
         }
 
 
-        public bool SetUserLogin(string feName, long userID, bool state)
+        public bool SetUserLogin(string feName, long userID)
         {
             string key = CombineDelimiter(feName, "login", ":");
 
-            return db.StringSetBit(key, userID, state);
+            return db.SetAdd(key, userID);
         }
 
         public bool GetUserLogin(string feName, long userID)
         {
             string key = CombineDelimiter(feName, "login", ":");
 
-            return db.StringGetBit(key, userID);
+            RedisValue[] result = db.SetMembers(key);
+
+            for (int idx = 0; idx < result.Length; idx++)
+            {
+                if (result[idx] == userID)
+                {
+                    return true;
+                }
+
+            }
+            return false;
         }
 
-        public bool DelUserLogin(string feName)
+        public bool DelUserLoginFE(string feName)
         {
             string key = CombineDelimiter(feName, "login", ":");
             return db.KeyDelete(key);
+        }
+
+        public bool DelUserLogin(string feName, long userID)
+        {
+            string key = CombineDelimiter(feName, "login", ":");
+            bool b1 = db.SetRemove(key, userID);
+            return b1;
+            //return db.SetRemove(key, userID);
         }
 
         public bool SetUserType(string id, bool userType)

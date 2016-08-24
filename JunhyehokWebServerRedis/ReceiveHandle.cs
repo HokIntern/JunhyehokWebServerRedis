@@ -319,8 +319,11 @@ namespace JunhyehokWebServerRedis
                 response = new Packet(returnHeader, recvPacket.data);
                 clientToSend.SendPacket(response);
 
+                /*
                 lock (clients)
                     clients.Remove(clientToSend.UserId);
+                    */
+                RemoveClient(client, true);
                 updateMMF = true;
                 //clientToSend.CloseConnection();
 
@@ -485,8 +488,12 @@ namespace JunhyehokWebServerRedis
             if (IsAgent())
             {
                 UpdateMMF(false);
-                backend.Shutdown(SocketShutdown.Both);
-                backend.Close();
+                try
+                {
+                    backend.Shutdown(SocketShutdown.Both);
+                    backend.Close();
+                }
+                catch (Exception) { Console.WriteLine("Auth already dead."); }
                 Environment.Exit(0);
             }
             return NoResponsePacket;
@@ -674,7 +681,7 @@ namespace JunhyehokWebServerRedis
 
             Console.WriteLine("[MEMORYMAPPED FILE] Writing to MMF: ({0})...", mmfName);
 
-            Mutex mutex = Mutex.OpenExisting("MMF_IPC" + mmfName);
+            Mutex mutex = new Mutex(false, "MMF_IPC" + mmfName);
             mutex.WaitOne();
 
             // Create Accessor to MMF

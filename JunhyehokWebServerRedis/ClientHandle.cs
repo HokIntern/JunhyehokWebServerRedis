@@ -109,6 +109,7 @@ namespace JunhyehokWebServerRedis
                     }
                     else
                     {
+                        heartbeatMiss = 0;
                         recvRequest = BytesToPacket(receiveBuffer);
 
                         if (ushort.MaxValue == recvRequest.header.code)
@@ -180,21 +181,52 @@ namespace JunhyehokWebServerRedis
                 Console.WriteLine("==SEND: \n" + PacketDebug(packet));
             }
             byte[] bytes = PacketToBytes(packet);
-            await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Binary, true, CancellationToken.None);
+            try
+            {
+                await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Binary, true, CancellationToken.None);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("SendPacket failed");
+            }
         }
 
-        private void StartHeartbeat()
+        private async void StartHeartbeat()
         {
+            while(heartbeatMiss != 3)
+            {
+                await Task.Delay(3000);
+                SendPacket(new Packet(new Header(Code.HEARTBEAT, 0), null));
+                heartbeatMiss++;
+            }
+
+            Console.WriteLine("[HEARBEAT MISSED] {0}:{1}", remoteHost, remotePort);
+            CloseConnection(true);
+            /*
             System.Timers.Timer timer = new System.Timers.Timer();
-            timer.Interval = 20 * 1000;
+            timer.Interval = 3 * 1000;
             timer.Elapsed += new ElapsedEventHandler(SendHeartbeat);
             timer.Start();
+            */
         }
 
+        /*
         private void SendHeartbeat(object sender, ElapsedEventArgs e)
         {
             SendPacket(new Packet(new Header(Code.HEARTBEAT, 0), null));
+            /*
+            catch (Exception)
+            {
+                heartbeatMiss++;
+
+                if (heartbeatMiss > 3)
+                {
+                    Console.WriteLine("[HEARBEAT MISSED] {0}:{1}", remoteHost, remotePort);
+                    CloseConnection(true);
+                }
+            }
         }
+        */
 
         private void Signout(bool signout)
         {

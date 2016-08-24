@@ -49,7 +49,6 @@ namespace JunhyehokWebServerRedis
                         break;
                 }
             }
-
             //=======================AGENT CONNECT================================
             Console.WriteLine("Connecting to Agent...");
             string agentInfo = "127.0.0.1:40000";
